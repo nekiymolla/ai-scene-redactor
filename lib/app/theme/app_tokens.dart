@@ -29,6 +29,36 @@ abstract final class AppColors {
   );
 }
 
+/// Liquid-glass material parameters (iOS 26 inspired). Tuned for the dark
+/// ambient background; glass needs colorful content behind it to read.
+abstract final class AppGlass {
+  static const blurSigma = 24.0;
+
+  /// Backdrop saturation boost; real glass makes what is behind it richer.
+  static const saturation = 1.5;
+
+  static const fillTop = Color(0x29FFFFFF);
+  static const fillBottom = Color(0x0DFFFFFF);
+  static const strokeTop = Color(0x80FFFFFF);
+  static const strokeBottom = Color(0x14FFFFFF);
+  static const strokeWidth = 1.0;
+  static const divider = Color(0x1FFFFFFF);
+
+  /// Soft shadow that lifts floating glass off the content.
+  static const shadow = BoxShadow(
+    color: Color(0x59000000),
+    blurRadius: 30,
+    offset: Offset(0, 12),
+  );
+
+  /// Ambient background blobs.
+  static const blobColors = [
+    Color(0xFF6D4BFF),
+    Color(0xFFFF4FA3),
+    Color(0xFF2E8BFF),
+  ];
+}
+
 abstract final class AppSpacing {
   static const xs = 4.0;
   static const sm = 8.0;
@@ -42,10 +72,11 @@ abstract final class AppSpacing {
 }
 
 abstract final class AppRadii {
-  static const sm = Radius.circular(10);
-  static const md = Radius.circular(16);
-  static const lg = Radius.circular(24);
+  static const sm = Radius.circular(12);
+  static const md = Radius.circular(22);
+  static const lg = Radius.circular(32);
 
   static const card = BorderRadius.all(md);
+  static const hero = BorderRadius.all(lg);
   static const sheet = BorderRadius.vertical(top: lg);
 }

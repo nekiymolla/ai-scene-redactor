@@ -46,6 +46,10 @@ abstract final class AppTheme {
           fontWeight: FontWeight.w700,
           letterSpacing: -0.5,
         ),
+        headlineSmall: text.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.3,
+        ),
         titleLarge: text.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         titleMedium: text.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         bodyLarge: text.bodyLarge?.copyWith(letterSpacing: 0.1),

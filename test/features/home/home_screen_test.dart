@@ -9,6 +9,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  // The ambient background animates forever unless the system asks to reduce
+  // motion; tests run in that mode so pumpAndSettle can settle.
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() {
+    binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+  });
+  tearDown(binding.platformDispatcher.clearAccessibilityFeaturesTestValue);
+
   testWidgets('shows the empty state when there are no projects', (
     tester,
   ) async {
@@ -58,12 +67,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Новый проект'), findsOneWidget);
 
-    await tester.pageBack();
+    await tester.tap(find.byTooltip('Назад'));
     await tester.pumpAndSettle();
+    expect(find.text('Пока нет проектов'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
     expect(find.text('Настройки'), findsOneWidget);
     expect(find.textContaining('Демо-режим'), findsOneWidget);
+
+    await tester.tap(find.text('Конфиденциальность'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('без регистрации'), findsOneWidget);
+  });
+
+  testWidgets('home has no back button on the root route', (tester) async {
+    await tester.pumpWidget(const ProviderScope(child: App()));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Назад'), findsNothing);
   });
 }

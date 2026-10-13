@@ -32,6 +32,8 @@
 | P1-07 | Базовые тесты | Защита от регрессий | P1-03..06 | Unit + widget тесты проходят | `flutter test` | DONE |
 | P1-08 | Проверка сборки | Компилируется на обеих платформах | P1-07 | Debug-сборки iOS-симулятор и Android | `flutter build ios --simulator --debug`, `flutter build apk --debug` | DONE |
 | P1-09 | Запуск на симуляторе/устройстве | Визуальная проверка | P1-08 | Home, Create, Settings открываются | Home — скриншот на симуляторе iPhone Air; Create/Settings — только widget-тестом | DONE |
+| P1-11 | Дизайн Liquid Glass | Стиль iOS 26 | P1-02 | `GlassSurface`, `GlassButton`, `GlassIconButton`, `GlassScaffold`, `AmbientBackground`; Home/Create/Settings переведены | Скриншоты Home и Settings на симуляторе, widget-тесты | DONE |
+| P1-12 | Liquid Glass: шейдерное преломление | Ближе к нативному стеклу | P1-11 | Спайк `liquid_glass_renderer` внутри `GlassSurface`, замер FPS/памяти | Профилирование на iPhone и Android | TODO |
 | P1-10 | CI (GitHub Actions) | analyze + test на каждый push | P0-05 | Зелёный workflow | Actions | TODO |
 
 ## Этап 2 · Интерфейс MVP

@@ -12,7 +12,10 @@
 
 - Flutter-проект `ai_scene_changer` (iOS + Android), org `com.aiscenechanger`,
   версия `0.1.0+1`, отображаемое имя «AI Scene Changer».
-- Тёмная Material 3 тема на токенах (`lib/app/theme/`).
+- Тёмная Material 3 тема на токенах (`lib/app/theme/`) + дизайн-система
+  **Liquid Glass** (`lib/core/widgets/glass/`): `GlassSurface`, `GlassButton`,
+  `GlassIconButton`, `GlassBackButton`, `GlassScaffold`, `AmbientBackground`.
+  Все экраны строятся на `GlassScaffold` (см. D-011).
 - GoRouter: `/` Home, `/create` (заглушка «в разработке»), `/settings`.
 - Riverpod: `appConfigProvider`, `routerProvider`,
   `projectsRepositoryProvider`, `recentProjectsProvider`.
@@ -62,6 +65,8 @@ macOS 26.5.1 arm64 · Flutter 3.44.2 · Dart 3.12.2 · Xcode 26.6 · CocoaPods
 - Бэкенд MVP: FastAPI + SQLite + локальный диск + asyncio-воркер; без
   PostgreSQL/Redis/S3 до реальной необходимости.
 - Без Freezed и кодогенерации Riverpod на старте.
+- Liquid Glass — собственная реализация на `BackdropFilter`, без
+  экспериментальных пакетов; шейдерное преломление — спайк P1-12.
 
 ### Главные риски
 
@@ -116,3 +121,22 @@ macOS 26.5.1 arm64 · Flutter 3.44.2 · Dart 3.12.2 · Xcode 26.6 · CocoaPods
 - Созданы README.md, MEMORY.md, DEVELOPMENT_PLAN.md, docs/*.md, .env.example;
   расширен .gitignore (секреты, Python, samples/).
 - Автор попросил по возможности использовать бесплатные модели → решение D-007.
+
+### 2026-10-14 · Итерация 2 — дизайн Liquid Glass
+
+- Запрос автора: стиль Liquid Glass как в iOS 26.
+- Исследование: официальной поддержки во Flutter нет; `liquid_glass_renderer`
+  0.2.0-dev.4 (experimental), `liquid_glass_native` 0.3.1 и `cupertino_native`
+  0.1.1 (platform views, только iOS). Версии проверены через pub.dev API.
+- Решение D-011: свой `GlassSurface` на `BackdropFilter`.
+- Созданы `lib/core/widgets/glass/*`; Home, Create, Settings и `StateView`
+  переведены на стекло; главное действие «Новое видео» — плавающая кнопка
+  внизу; кнопки в шапке — круглые стеклянные; листы настроек — стекло.
+- Тесты: собственная кнопка «Назад» (поиск по tooltip), тест листа
+  «Конфиденциальность», тест отсутствия «Назад» на корне; в тестах включён
+  режим `disableAnimations`, иначе фон анимируется бесконечно.
+- `flutter analyze` → No issues found; `flutter test` → 12/12 passed;
+  `flutter build ios --simulator --debug` → ✓.
+- Скриншоты Home и Settings на симуляторе iPhone Air; Settings снят с
+  временной сборки, где initialLocation=/settings (правка откатана).
+- На Android стекло визуально не проверялось.

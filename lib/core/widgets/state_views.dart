@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/app_tokens.dart';
+import 'glass/glass_surface.dart';
 
 /// Centered icon + title + message, with an optional action.
 /// Used for empty lists, errors and offline states so they look consistent.
@@ -31,14 +32,12 @@ class StateView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: const BoxDecoration(
-              color: AppColors.surfaceHigh,
-              shape: BoxShape.circle,
+          GlassSurface(
+            shape: const CircleBorder(),
+            child: SizedBox.square(
+              dimension: 64,
+              child: Icon(icon, color: theme.colorScheme.primary, size: 30),
             ),
-            child: Icon(icon, color: theme.colorScheme.primary, size: 30),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
