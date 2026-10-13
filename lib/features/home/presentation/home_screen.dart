@@ -8,9 +8,11 @@ import '../../../core/widgets/glass/glass_buttons.dart';
 import '../../../core/widgets/glass/glass_scaffold.dart';
 import '../../../core/widgets/glass/glass_surface.dart';
 import '../../../core/widgets/state_views.dart';
-import '../../generation/domain/generation_job.dart';
+import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/media/media_tiles.dart';
 import '../../projects/application/projects_providers.dart';
 import '../../projects/domain/project.dart';
+import '../../projects/presentation/project_status.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -141,42 +143,49 @@ class _ProjectTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final status = project.lastJobStatus;
-    return GlassSurface(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        children: [
-          const Icon(Icons.movie_outlined, color: AppColors.textSecondary),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  project.title,
-                  style: theme.textTheme.titleMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => context.push(AppRoutes.project(project.id)),
+        child: GlassSurface(
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: Row(
+            children: [
+              MediaThumbnail(asset: project.sourceVideo, size: 72),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      project.title,
+                      style: theme.textTheme.titleMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      project.prompt.isEmpty
+                          ? formatShortDateTime(project.updatedAt)
+                          : project.prompt,
+                      style: theme.textTheme.bodyMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    ProjectStatusChip(status: project.lastJobStatus),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  status == null ? 'Черновик' : _statusLabel(status),
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textSecondary,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
-
-String _statusLabel(GenerationStatus status) => switch (status) {
-  GenerationStatus.uploading => 'Загрузка',
-  GenerationStatus.queued => 'В очереди',
-  GenerationStatus.processing => 'Обработка',
-  GenerationStatus.succeeded => 'Готово',
-  GenerationStatus.failed => 'Ошибка',
-  GenerationStatus.cancelled => 'Отменено',
-};

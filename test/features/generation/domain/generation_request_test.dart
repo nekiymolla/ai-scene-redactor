@@ -1,10 +1,18 @@
 import 'package:ai_scene_changer/features/generation/domain/generation_job.dart';
 import 'package:ai_scene_changer/features/generation/domain/generation_request.dart';
-import 'package:ai_scene_changer/features/generation/domain/media_asset.dart';
+import 'package:ai_scene_changer/core/media/media_asset.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-const _video = MediaAsset(id: 'v', kind: MediaKind.video, localPath: '/v.mp4');
-const _photo = MediaAsset(id: 'p', kind: MediaKind.image, localPath: '/p.jpg');
+const _video = MediaAsset(
+  id: 'v',
+  kind: MediaKind.video,
+  relativePath: '/v.mp4',
+);
+const _photo = MediaAsset(
+  id: 'p',
+  kind: MediaKind.image,
+  relativePath: '/p.jpg',
+);
 
 CharacterReference _character(String id, {int photos = 1}) =>
     CharacterReference(
@@ -77,7 +85,7 @@ void main() {
     const asset = MediaAsset(
       id: 'a',
       kind: MediaKind.video,
-      localPath: '/a.mp4',
+      relativePath: '/a.mp4',
       sizeBytes: 10,
       duration: Duration(milliseconds: 4200),
       width: 1080,

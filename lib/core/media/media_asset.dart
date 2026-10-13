@@ -1,14 +1,16 @@
 enum MediaKind { video, image }
 
-/// A media file the user picked on the device.
+/// A media file the user picked, copied into app-owned storage.
 ///
-/// [localPath] points to an app-owned copy (not the gallery original), so the
-/// project keeps working even if the user deletes the source from the gallery.
+/// Paths are relative to the app storage root (see `AppStorage`): on iOS the
+/// absolute container path changes between app updates, so absolute paths
+/// stored on disk would break.
 class MediaAsset {
   const MediaAsset({
     required this.id,
     required this.kind,
-    required this.localPath,
+    required this.relativePath,
+    this.thumbnailRelativePath,
     this.sizeBytes,
     this.duration,
     this.width,
@@ -17,7 +19,11 @@ class MediaAsset {
 
   final String id;
   final MediaKind kind;
-  final String localPath;
+  final String relativePath;
+
+  /// JPEG preview frame, only for videos. May be missing if the platform
+  /// could not extract a frame.
+  final String? thumbnailRelativePath;
   final int? sizeBytes;
 
   /// Only for [MediaKind.video].
@@ -30,7 +36,8 @@ class MediaAsset {
   Map<String, Object?> toJson() => {
     'id': id,
     'kind': kind.name,
-    'localPath': localPath,
+    'relativePath': relativePath,
+    'thumbnailRelativePath': thumbnailRelativePath,
     'sizeBytes': sizeBytes,
     'durationMs': duration?.inMilliseconds,
     'width': width,
@@ -42,7 +49,8 @@ class MediaAsset {
     return MediaAsset(
       id: json['id']! as String,
       kind: MediaKind.values.byName(json['kind']! as String),
-      localPath: json['localPath']! as String,
+      relativePath: json['relativePath']! as String,
+      thumbnailRelativePath: json['thumbnailRelativePath'] as String?,
       sizeBytes: json['sizeBytes'] as int?,
       duration: durationMs == null ? null : Duration(milliseconds: durationMs),
       width: json['width'] as int?,

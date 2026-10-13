@@ -77,6 +77,7 @@ abstract final class AppRadii {
   static const lg = Radius.circular(32);
 
   static const card = BorderRadius.all(md);
+  static const thumb = BorderRadius.all(Radius.circular(18));
   static const hero = BorderRadius.all(lg);
   static const sheet = BorderRadius.vertical(top: lg);
 }

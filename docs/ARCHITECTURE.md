@@ -11,7 +11,7 @@
 │  └ BackendGateway ───┼──────────────────│ Storage ─ локальный диск (MVP)│
 │                      │                  │ Worker (asyncio, in-process)  │
 │ ProjectsRepository   │                  │ MediaService ─ ffmpeg/ffprobe │
-│  └ локально          │                  │ GenerationProvider            │
+│  └ JSON на устройстве│                  │ GenerationProvider            │
 └──────────────────────┘                  │  ├ MockProvider               │
                                           │  ├ HuggingFaceSpaceProvider   │
                                           │  └ FalProvider (позже, платно)│
@@ -21,8 +21,8 @@
                                           AI-провайдеры (HF Spaces, fal.ai, …)
 ```
 
-Статус: реализованы только клиентская часть foundation и доменные
-интерфейсы. Бэкенда пока нет (этап 4).
+Статус: реализован клиент до этапа 2 включительно (мастер создания,
+медиа, локальное хранение). Генерации и бэкенда пока нет (этапы 3–4).
 
 ## Клиент (Flutter)
 
@@ -38,13 +38,15 @@ lib/
   core/
     config/                 AppConfig из --dart-define (без секретов)
     errors/                 sealed AppFailure — типизированные ошибки
-    widgets/                общие виджеты состояний (пусто/ошибка)
+    media/                  MediaAsset, MediaPicker, MediaImporter, лимиты
+    storage/                AppStorage — корень Documents, относительные пути
+    utils/                  форматирование дат, длительностей, размеров
+    widgets/                стекло (glass/), медиа (media/), состояния, диалоги
   features/
     home/presentation/
-    project_creation/presentation/
-    generation/domain/      MediaAsset, GenerationRequest, GenerationJob,
-                            GenerationGateway (контракт)
-    projects/{domain,data,application}/
+    project_creation/{application,presentation}/   черновик + 4 шага мастера
+    generation/domain/      GenerationRequest, GenerationJob, GenerationGateway
+    projects/{domain,data,application,presentation}/
     settings/presentation/
 ```
 

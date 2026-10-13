@@ -87,7 +87,7 @@ class GlassButton extends StatelessWidget {
       semanticLabel: label,
       child: GlassSurface.capsule(
         tint: prominent ? AppColors.primary : null,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: SizedBox(
           height: 56,
           child: Row(
@@ -98,7 +98,14 @@ class GlassButton extends StatelessWidget {
                 Icon(icon, color: AppColors.textPrimary),
                 const SizedBox(width: AppSpacing.sm),
               ],
-              Text(label, style: text),
+              Flexible(
+                child: Text(
+                  label,
+                  style: text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),
@@ -134,6 +141,35 @@ class GlassIconButton extends StatelessWidget {
             dimension: 44,
             child: Icon(icon, color: AppColors.textPrimary, size: 22),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small glass capsule for suggestions and filters.
+class GlassChip extends StatelessWidget {
+  const GlassChip({super.key, required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Pressable(
+      onPressed: onPressed,
+      semanticLabel: label,
+      child: GlassSurface.capsule(
+        floating: false,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm + 2,
+        ),
+        child: Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary),
         ),
       ),
     );

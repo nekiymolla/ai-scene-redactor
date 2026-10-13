@@ -13,12 +13,16 @@ class GlassScaffold extends StatelessWidget {
     super.key,
     required this.title,
     required this.slivers,
+    this.subtitle,
     this.leading,
     this.actions = const [],
     this.bottomAction,
   });
 
   final String title;
+
+  /// Small line above the title, e.g. the wizard step.
+  final String? subtitle;
   final List<Widget> slivers;
 
   /// Top-left floating control, usually a back button.
@@ -45,6 +49,8 @@ class GlassScaffold extends StatelessWidget {
           Positioned.fill(
             child: BackdropGroup(
               child: CustomScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 slivers: [
                   SliverPadding(
                     padding: AppSpacing.page.copyWith(
@@ -52,12 +58,23 @@ class GlassScaffold extends StatelessWidget {
                       bottom: AppSpacing.md,
                     ),
                     sliver: SliverToBoxAdapter(
-                      child: Semantics(
-                        header: true,
-                        child: Text(
-                          title,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (subtitle != null)
+                            Text(
+                              subtitle!,
+                              style: Theme.of(context).textTheme.labelLarge
+                                  ?.copyWith(color: AppColors.primary),
+                            ),
+                          Semantics(
+                            header: true,
+                            child: Text(
+                              title,
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -68,7 +85,10 @@ class GlassScaffold extends StatelessWidget {
             ),
           ),
           // Scrims keep floating controls legible over scrolled content.
-          _Scrim(height: padding.top + _toolbarHeight, top: true),
+          _Scrim(
+            height: padding.top + _toolbarHeight + AppSpacing.lg,
+            top: true,
+          ),
           if (bottomAction != null) _Scrim(height: bottomInset, top: false),
           Positioned(
             top: padding.top + AppSpacing.sm,
@@ -107,7 +127,8 @@ class _Scrim extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = [
-      AppColors.background.withValues(alpha: 0.85),
+      AppColors.background.withValues(alpha: 0.95),
+      AppColors.background.withValues(alpha: 0.75),
       AppColors.background.withValues(alpha: 0),
     ];
     return Positioned(
@@ -123,6 +144,7 @@ class _Scrim extends StatelessWidget {
               begin: top ? Alignment.topCenter : Alignment.bottomCenter,
               end: top ? Alignment.bottomCenter : Alignment.topCenter,
               colors: colors,
+              stops: const [0, 0.55, 1],
             ),
           ),
         ),

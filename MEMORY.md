@@ -5,37 +5,46 @@
 
 ## Текущее состояние (2026-10-14)
 
-**Этап:** 1 — Flutter foundation завершён (CI P1-10 отложен). Следующая
-задача: P2-01 (выбор медиа-пакетов) → P2-02 (выбор исходного видео).
+**Этап:** 2 — интерфейс MVP завершён, кроме P2-09 (системный пикер на
+реальном устройстве не проверен). Следующая задача: этап 3, P3-01
+(MockGenerationGateway) → P3-02..P3-05.
 
 ### Что реализовано
 
-- Flutter-проект `ai_scene_changer` (iOS + Android), org `com.aiscenechanger`,
-  версия `0.1.0+1`, отображаемое имя «AI Scene Changer».
-- Тёмная Material 3 тема на токенах (`lib/app/theme/`) + дизайн-система
-  **Liquid Glass** (`lib/core/widgets/glass/`): `GlassSurface`, `GlassButton`,
-  `GlassIconButton`, `GlassBackButton`, `GlassScaffold`, `AmbientBackground`.
-  Все экраны строятся на `GlassScaffold` (см. D-011).
-- GoRouter: `/` Home, `/create` (заглушка «в разработке»), `/settings`.
-- Riverpod: `appConfigProvider`, `routerProvider`,
-  `projectsRepositoryProvider`, `recentProjectsProvider`.
-- `AppConfig` из `--dart-define` (`GENERATION_MODE`, `API_BASE_URL`).
-- sealed `AppFailure` (Network/Validation/Media/Permission/Generation/Storage/Unexpected).
-- Доменные модели: `MediaAsset`, `CharacterReference`, `GenerationSettings`,
-  `GenerationRequest` (+`validate()`), `GenerationStatus`, `GenerationJob`
-  (`isSynthetic`), `GenerationResult`, `Project`; интерфейс `GenerationGateway`.
-- `InMemoryProjectsRepository` — **временный**, данные теряются при перезапуске.
-- Home: карточка «Новое видео», недавние проекты с состояниями loading/error/empty.
-- Settings: режим обработки, листы «AI-обработка» и «Конфиденциальность», версия.
+- Flutter-проект `ai_scene_changer` (iOS 14.0+ и Android), версия `0.1.0+1`.
+- Дизайн-система Liquid Glass (`lib/core/widgets/glass/`): `GlassSurface`,
+  `GlassButton`, `GlassChip`, `GlassIconButton`, `GlassBackButton`,
+  `GlassScaffold` (заголовок, подзаголовок-шаг, плавающие кнопки),
+  `GlassTextField`, `GlassSegmented`, `GlassRow`, `SectionCaption`,
+  `AmbientBackground`. Токены — `lib/app/theme/app_tokens.dart`.
+- Маршруты (все вложены в `/`): `/settings`, `/projects/:id`, `/create`,
+  `/create/characters`, `/create/describe`, `/create/review`.
+- Мастер создания проекта (4 шага) на `ProjectDraftController`
+  (`features/project_creation/application/`), autoDispose; незасохранённый
+  черновик удаляет свою папку с медиа.
+- Медиа (`lib/core/media/`): `MediaPicker` (image_picker, без запроса
+  доступа), `MediaImporter` (копирование в папку проекта, длительность и
+  размер через video_player, превью через fc_native_video_thumbnail,
+  размер фото через ImageDescriptor), `VideoLimits`/`ImageLimits`.
+- Хранилище: `AppStorage` (Documents, относительные пути) +
+  `FileProjectsRepository` (project.json на проект, атомарная запись).
+- Главный экран: список проектов с превью; экран проекта: видеоплеер
+  (создаётся по тапу), описание, персонажи, референсы, параметры, удаление.
+- Настройки: режим обработки, AI-обработка, конфиденциальность, версия.
+- Доменные модели: `MediaAsset` (в `core/media`), `CharacterReference`
+  (+description), `GenerationSettings`, `GenerationRequest` (+validate),
+  `GenerationJob`, `GenerationResult`, `Project` (+JSON), `GenerationGateway`.
 
 ### Работает только как заглушка / mock
 
-- Экран создания проекта — заглушка.
-- Генерации нет ни в каком виде (mock-шлюз — P3-01).
+- Генерации нет ни в каком виде; на экране проекта честно написано
+  «Генерация пока недоступна».
 
 ### Не реализовано
 
-Этапы 2–7 целиком (см. DEVELOPMENT_PLAN.md). Бэкенда нет.
+Этапы 3–7 (см. DEVELOPMENT_PLAN.md). Бэкенда нет. Android
+`retrieveLostData` (потеря результата пикера, если система убила Activity).
+Редактирование сохранённого проекта.
 
 ### Зависимости
 
@@ -43,61 +52,66 @@
 |---|---|---|
 | flutter_riverpod | ^3.4.3 | Состояние |
 | go_router | ^18.0.2 | Навигация |
-| flutter_lints | (шаблон) | Линтер |
+| image_picker | ^1.2.4 | Системный выбор фото/видео |
+| video_player | ^2.14.1 | Плеер и чтение метаданных видео |
+| path_provider | ^2.1.6 | Папка Documents |
+| uuid | ^4.6.0 | Идентификаторы |
+| fc_native_video_thumbnail | ^3.0.1 | Превью видео |
+| integration_test (dev, SDK) | — | Тесты на устройстве |
 
 ### Окружение (проверено 2026-10-14)
 
 macOS 26.5.1 arm64 · Flutter 3.44.2 · Dart 3.12.2 · Xcode 26.6 · CocoaPods
 1.16.2 · Android SDK 36 / JDK 21 · Python 3.14.0 · Docker 28.5.1 · Git 2.50.1.
-Нет: ffmpeg, uv. Android SDK-лицензии не приняты (`flutter doctor --android-licenses`).
-Устройства: iOS-симулятор iPhone Air, два iPhone по Wi-Fi.
+Нет: ffmpeg, uv. Android SDK-лицензии не приняты. Симулятор: iPhone Air
+(045DAF7C-8774-423B-B8BB-F7626A1EB53F). Git remote — SSH
+(`git@github.com:nekiymolla/ai-scene-redactor.git`); HTTPS без учётных данных.
 
-### Ключевые решения (подробно — docs/DECISIONS.md)
+### Как проверять
+
+- `flutter analyze`, `flutter test` (unit + widget, без устройства).
+- Импорт медиа на симуляторе (свои файлы, в Git не кладём):
+  `flutter test integration_test -d <sim> --dart-define=SAMPLE_VIDEO=/abs/clip.mov --dart-define=SAMPLE_IMAGE=/abs/photo.png`.
+  Тестовое видео удобно снять так: `xcrun simctl io <sim> recordVideo --codec=h264 clip.mov`.
+- Визуальная проверка без ручных нажатий: временный integration-тест,
+  который проходит сценарий и печатает маркеры, плюс
+  `xcrun simctl io <sim> screenshot` по маркерам (в репозиторий не коммитился).
+
+### Ключевые решения (подробно — docs/DECISIONS.md, D-001…D-016)
 
 - Монорепо: Flutter в корне, бэкенд будет в `backend/`.
-- Клиент → только наш бэкенд (`GenerationGateway`); AI-провайдеры и ключи —
-  только на сервере (`GenerationProvider`).
-- Hosted video-editing API вместо собственного ML-pipeline; ffmpeg на
-  бэкенде для звука и нарезки.
-- **Free-first** (у автора нет бюджета): Mock → Hugging Face Space (Wan 2.2
-  Animate, бесплатная квота, только эксперименты) → fal.ai (Wan Replace ≈
-  $0.04/с 480p, Kling O3 Edit ≈ $0.252/с) после согласования.
-- Бэкенд MVP: FastAPI + SQLite + локальный диск + asyncio-воркер; без
-  PostgreSQL/Redis/S3 до реальной необходимости.
-- Без Freezed и кодогенерации Riverpod на старте.
-- Liquid Glass — собственная реализация на `BackdropFilter`, без
-  экспериментальных пакетов; шейдерное преломление — спайк P1-12.
+- Клиент говорит только с нашим бэкендом (`GenerationGateway`); AI-провайдеры
+  и ключи — только на сервере (`GenerationProvider`).
+- Hosted video-editing API вместо собственного ML-pipeline.
+- **Free-first** (у автора нет бюджета): Mock → Hugging Face Space →
+  fal.ai после согласования.
+- Бэкенд MVP: FastAPI + SQLite + локальный диск + asyncio-воркер.
+- Без Freezed и кодогенерации.
+- Liquid Glass — своя реализация на BackdropFilter (D-011).
+- Медиа: пути относительно Documents, проект = папка + JSON (D-013).
 
 ### Главные риски
 
-1. **Возможности моделей.** Ни одна модель не делает всё сразу: Wan Replace —
-   один персонаж; Kling O3 Edit — до 4 референсов, 3–15 с; длинные ролики
-   требуют нарезки и дадут швы. Сохранение мимики/монтажа не подтверждено.
-2. **Деньги и бесплатные квоты.** Бесплатный путь (HF ZeroGPU) маленький и
-   нестабильный; платная генерация стоит денег за каждую секунду; без
-   аккаунтов сложно ограничить злоупотребления.
-3. **Право и безопасность.** Лица реальных людей (deepfake), чужая музыка и
-   видео (трендовые ролики), правила App Store/Google Play, safety-фильтры
-   провайдеров могут отклонять запросы.
-4. **Медиа на мобильных.** HEVC/HDR/поворот видео с iPhone, большие файлы,
-   прерванная загрузка → нужна нормализация через ffmpeg на сервере и
-   устойчивая загрузка.
-5. **Долгая обработка (минуты).** Приложение сворачивают → нужно
-   восстановление задачи по id, позже — push-уведомления.
+1. Возможности моделей (1 персонаж у Wan, 3–15 с и ≤4 референса у Kling).
+2. Деньги и нестабильные бесплатные квоты; защита от злоупотреблений.
+3. Права: лица, чужая музыка и видео, правила сторов.
+4. Медиа на мобильных: HEVC/HDR/поворот, большие файлы.
+5. Долгая обработка: сворачивание приложения, восстановление задачи.
 
 ### Открытые вопросы к автору
 
-- Финальное название продукта и bundle id (сейчас iOS `com.aiscenechanger.aiSceneChanger`, Android `com.aiscenechanger.ai_scene_changer`).
-- Видимый водяной знак «AI» на экспортируемом видео — да/нет.
+- Финальное название и bundle id (iOS `com.aiscenechanger.aiSceneChanger`,
+  Android `com.aiscenechanger.ai_scene_changer`).
+- Видимый водяной знак «AI» на экспорте.
 - Срок хранения результатов на сервере (предложено 24 ч).
-- Готовность завести бесплатный аккаунт Hugging Face для этапа 5.
+- Бесплатный аккаунт Hugging Face для этапа 5.
 
 ### [не проверено]
 
-- Лицензия Wan 2.2 Animate для коммерческого использования.
-- Размер бесплатной квоты ZeroGPU и доступность публичного Space с Wan Animate.
-- Лимиты Runway `aleph2` API.
-- Цены провайдеров (взяты со страниц, не подтверждены счетами).
+- Системный пикер (PHPicker / Android Photo Picker) на реальном устройстве.
+- Импорт HEVC/HDR-видео с iPhone и видео на Android.
+- Производительность стекла на слабых Android.
+- Лицензия Wan 2.2 Animate, квота ZeroGPU, лимиты Runway API, цены.
 
 ## Журнал
 
@@ -140,3 +154,25 @@ macOS 26.5.1 arm64 · Flutter 3.44.2 · Dart 3.12.2 · Xcode 26.6 · CocoaPods
 - Скриншоты Home и Settings на симуляторе iPhone Air; Settings снят с
   временной сборки, где initialLocation=/settings (правка откатана).
 - На Android стекло визуально не проверялось.
+
+### 2026-10-14 · Итерация 3 — этап 2 (интерфейс MVP)
+
+- P2-01: пакеты выбраны по pub.dev API (D-012); добавлены image_picker,
+  video_player, path_provider, uuid, fc_native_video_thumbnail,
+  integration_test (dev).
+- `MediaAsset` перенесён в `lib/core/media/`; `localPath` → `relativePath`.
+- Реализованы медиа-сервисы, `AppStorage`, `FileProjectsRepository`,
+  `ProjectDraftController`, 4 экрана мастера, экран проекта, общие
+  стеклянные контролы, `showFailure`/`confirmDestructive`.
+- iOS: `NSPhotoLibraryUsageDescription`, deployment target 13.0 → 14.0
+  (Podfile + project.pbxproj), появились Podfile/Podfile.lock.
+- Тесты нашли реальные переполнения: текст в узких `GlassButton` и строка
+  «статус + дата» на экране проекта — исправлено (Flexible/ellipsis).
+- `flutter analyze` → No issues; `flutter test` → 34/34 passed.
+- `flutter build ios --simulator --debug` ✓, `flutter build apk --debug` ✓.
+- Интеграционный тест импорта на симуляторе iPhone Air → 4/4 passed:
+  видео 6,66 с, 1260×2736, превью создано; нечитаемый файл и нарушение
+  лимитов отклоняются без копирования.
+- Визуальный тур по всем экранам на симуляторе (реальный импорт файлов);
+  по скриншотам исправлены: затемнение под шапкой, стеклянные чипы,
+  компактная строка «Качество», цвет чекбокса.
