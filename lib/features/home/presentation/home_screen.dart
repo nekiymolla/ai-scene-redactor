@@ -10,6 +10,8 @@ import '../../../core/widgets/glass/glass_surface.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/media/media_tiles.dart';
+import '../../generation/application/job_tracker.dart';
+import '../../generation/domain/generation_job.dart';
 import '../../projects/application/projects_providers.dart';
 import '../../projects/domain/project.dart';
 import '../../projects/presentation/project_status.dart';
@@ -174,7 +176,9 @@ class _ProjectTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    ProjectStatusChip(status: project.lastJobStatus),
+                    project.hasActiveJob
+                        ? _LiveProgress(projectId: project.id)
+                        : ProjectStatusChip(status: project.lastJobStatus),
                   ],
                 ),
               ),
@@ -186,6 +190,34 @@ class _ProjectTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Keeps polling an active job while its tile is visible on Home.
+class _LiveProgress extends ConsumerWidget {
+  const _LiveProgress({required this.projectId});
+
+  final String projectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tracker = ref.watch(jobTrackerProvider(projectId));
+    final job = tracker.job;
+    final progress = job?.status == GenerationStatus.processing
+        ? job?.progress
+        : null;
+    return Row(
+      children: [
+        ProjectStatusChip(status: tracker.status),
+        if (progress != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            '${(progress * 100).round()}%',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+        ],
+      ],
     );
   }
 }

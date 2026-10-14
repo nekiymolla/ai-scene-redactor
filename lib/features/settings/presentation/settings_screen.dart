@@ -6,6 +6,8 @@ import '../../../core/config/app_config.dart';
 import '../../../core/widgets/glass/glass_back_button.dart';
 import '../../../core/widgets/glass/glass_scaffold.dart';
 import '../../../core/widgets/glass/glass_surface.dart';
+import '../../generation/application/generation_providers.dart';
+import '../../generation/data/mock_generation_gateway.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -32,6 +34,24 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ],
         ),
+        if (config.isMock)
+          _Section(
+            title: 'Демо-режим',
+            children: [
+              SwitchListTile.adaptive(
+                secondary: const Icon(Icons.bug_report_outlined),
+                title: const Text('Следующая генерация с ошибкой'),
+                subtitle: const Text(
+                  'Чтобы посмотреть, как приложение показывает сбои',
+                ),
+                activeTrackColor: AppColors.primary,
+                value: ref.watch(mockScenarioProvider) == MockScenario.failure,
+                onChanged: (v) => ref
+                    .read(mockScenarioProvider.notifier)
+                    .set(v ? MockScenario.failure : MockScenario.success),
+              ),
+            ],
+          ),
         _Section(
           title: 'О приложении',
           children: [

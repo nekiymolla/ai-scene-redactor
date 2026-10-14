@@ -19,7 +19,9 @@ class Project {
     this.settings = const GenerationSettings(),
     this.lastJobId,
     this.lastJobStatus,
+    this.lastFailureMessage,
     this.resultRelativePath,
+    this.resultIsSynthetic = false,
   });
 
   final String id;
@@ -34,8 +36,58 @@ class Project {
   final String? lastJobId;
   final GenerationStatus? lastJobStatus;
 
-  /// Downloaded result, relative to the app storage root.
+  /// User-facing reason of the last failed job.
+  final String? lastFailureMessage;
+
+  /// Result video, relative to the app storage root.
   final String? resultRelativePath;
+
+  /// The result came from the mock pipeline and must be labelled as such.
+  final bool resultIsSynthetic;
+
+  bool get hasActiveJob =>
+      lastJobId != null && !(lastJobStatus?.isTerminal ?? false);
+
+  bool get hasResult =>
+      lastJobStatus == GenerationStatus.succeeded && resultRelativePath != null;
+
+  static const _keep = Object();
+
+  /// Nullable fields accept an explicit `null` to clear them.
+  Project copyWith({
+    String? title,
+    DateTime? updatedAt,
+    Object? lastJobId = _keep,
+    Object? lastJobStatus = _keep,
+    Object? lastFailureMessage = _keep,
+    Object? resultRelativePath = _keep,
+    bool? resultIsSynthetic,
+  }) {
+    return Project(
+      id: id,
+      title: title ?? this.title,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      sourceVideo: sourceVideo,
+      characters: characters,
+      styleReferences: styleReferences,
+      prompt: prompt,
+      settings: settings,
+      lastJobId: identical(lastJobId, _keep)
+          ? this.lastJobId
+          : lastJobId as String?,
+      lastJobStatus: identical(lastJobStatus, _keep)
+          ? this.lastJobStatus
+          : lastJobStatus as GenerationStatus?,
+      lastFailureMessage: identical(lastFailureMessage, _keep)
+          ? this.lastFailureMessage
+          : lastFailureMessage as String?,
+      resultRelativePath: identical(resultRelativePath, _keep)
+          ? this.resultRelativePath
+          : resultRelativePath as String?,
+      resultIsSynthetic: resultIsSynthetic ?? this.resultIsSynthetic,
+    );
+  }
 
   GenerationRequest toRequest() => GenerationRequest(
     sourceVideo: sourceVideo,
@@ -58,7 +110,9 @@ class Project {
     'settings': settings.toJson(),
     'lastJobId': lastJobId,
     'lastJobStatus': lastJobStatus?.name,
+    'lastFailureMessage': lastFailureMessage,
     'resultRelativePath': resultRelativePath,
+    'resultIsSynthetic': resultIsSynthetic,
   };
 
   factory Project.fromJson(Map<String, Object?> json) {
@@ -85,7 +139,9 @@ class Project {
       lastJobStatus: status == null
           ? null
           : GenerationStatus.values.byName(status),
+      lastFailureMessage: json['lastFailureMessage'] as String?,
       resultRelativePath: json['resultRelativePath'] as String?,
+      resultIsSynthetic: json['resultIsSynthetic'] as bool? ?? false,
     );
   }
 }

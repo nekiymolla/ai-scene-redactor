@@ -15,6 +15,15 @@ class AppStorage {
 
   File file(String relativePath) => File('${root.path}/$relativePath');
 
+  /// Relative path of a local file under [root], or null for anything else
+  /// (remote URLs, files outside app storage).
+  String? relativize(Uri uri) {
+    if (!uri.isScheme('file')) return null;
+    final path = uri.toFilePath();
+    final prefix = '${root.path}/';
+    return path.startsWith(prefix) ? path.substring(prefix.length) : null;
+  }
+
   Directory get projectsDirectory => Directory('${root.path}/$_projectsDir');
 
   /// Relative path of a project's folder.

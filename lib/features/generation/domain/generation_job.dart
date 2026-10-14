@@ -1,7 +1,7 @@
 import '../../../core/errors/app_failure.dart';
 
 enum GenerationStatus {
-  /// Created locally, media is being uploaded to the backend.
+  /// Media is being uploaded to the backend.
   uploading,
 
   /// Accepted by the backend, waiting for a provider slot.
@@ -26,6 +26,7 @@ class GenerationJob {
     required this.isSynthetic,
     this.progress,
     this.statusMessage,
+    this.estimatedRemaining,
     this.failure,
   });
 
@@ -33,11 +34,15 @@ class GenerationJob {
   final GenerationStatus status;
   final DateTime createdAt;
 
-  /// 0..1 when the provider reports it, otherwise null (indeterminate).
+  /// 0..1 within the current [status] when reported, otherwise null
+  /// (indeterminate).
   final double? progress;
 
-  /// Optional human-readable stage, e.g. "Восстанавливаем звук".
+  /// Optional human-readable stage, e.g. "Возвращаем оригинальный звук".
   final String? statusMessage;
+
+  /// Only when the backend or provider can estimate it.
+  final Duration? estimatedRemaining;
 
   /// Set when [status] is [GenerationStatus.failed].
   final GenerationFailure? failure;
@@ -45,23 +50,6 @@ class GenerationJob {
   /// True when produced by the mock pipeline. The UI must label such results
   /// so a placeholder is never presented as real AI output.
   final bool isSynthetic;
-
-  GenerationJob copyWith({
-    GenerationStatus? status,
-    double? progress,
-    String? statusMessage,
-    GenerationFailure? failure,
-  }) {
-    return GenerationJob(
-      id: id,
-      status: status ?? this.status,
-      createdAt: createdAt,
-      isSynthetic: isSynthetic,
-      progress: progress ?? this.progress,
-      statusMessage: statusMessage ?? this.statusMessage,
-      failure: failure ?? this.failure,
-    );
-  }
 }
 
 /// The finished output of a succeeded job.
@@ -74,7 +62,7 @@ class GenerationResult {
 
   final String jobId;
 
-  /// Remote URL from the backend or a local file URI after download.
+  /// Remote URL from the backend or a local file URI.
   final Uri videoUri;
   final bool isSynthetic;
 }

@@ -15,6 +15,8 @@ import '../../../core/widgets/glass/glass_surface.dart';
 import '../../../core/widgets/media/media_tiles.dart';
 import '../../../core/widgets/media/video_preview.dart';
 import '../../../core/widgets/state_views.dart';
+import '../../generation/application/job_tracker.dart';
+import '../../generation/domain/generation_job.dart';
 import '../application/projects_providers.dart';
 import '../domain/project.dart';
 import 'project_status.dart';
@@ -67,6 +69,7 @@ class ProjectDetailsScreen extends ConsumerWidget {
                   onPressed: () => _delete(context, ref),
                 ),
               ],
+              bottomAction: _PrimaryAction(projectId: projectId),
               slivers: [_Body(project: p)],
             ),
     );
@@ -102,7 +105,7 @@ class _Body extends StatelessWidget {
         children: [
           Row(
             children: [
-              ProjectStatusChip(status: p.lastJobStatus),
+              _LiveStatusChip(projectId: p.id),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -117,16 +120,7 @@ class _Body extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           VideoPreview(asset: p.sourceVideo),
           const SizedBox(height: AppSpacing.lg),
-          GlassSurface(
-            child: const GlassRow(
-              leading: Icon(Icons.hourglass_empty_rounded),
-              title: 'Генерация пока недоступна',
-              subtitle:
-                  'Проект сохранён. Запуск AI-обработки появится в '
-                  'следующем обновлении приложения.',
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
+          _GenerationCard(projectId: p.id),
           const SectionCaption('Описание'),
           GlassSurface(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -206,6 +200,148 @@ class _Body extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LiveStatusChip extends ConsumerWidget {
+  const _LiveStatusChip({required this.projectId});
+
+  final String projectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(
+      jobTrackerProvider(projectId).select((t) => t.status),
+    );
+    return ProjectStatusChip(status: status);
+  }
+}
+
+/// Shows the state of the latest generation and links to its screen.
+class _GenerationCard extends ConsumerWidget {
+  const _GenerationCard({required this.projectId});
+
+  final String projectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tracker = ref.watch(jobTrackerProvider(projectId));
+    final project = tracker.project;
+    if (tracker.loading || project == null) return const SizedBox.shrink();
+
+    final job = tracker.job;
+    final (icon, title, subtitle, route) = switch (tracker.status) {
+      null => (null, null, null, null),
+      GenerationStatus.uploading ||
+      GenerationStatus.queued ||
+      GenerationStatus.processing => (
+        Icons.auto_awesome_rounded,
+        job?.progress != null && tracker.status == GenerationStatus.processing
+            ? 'Идёт обработка · ${(job!.progress! * 100).round()}%'
+            : 'Идёт обработка',
+        job?.statusMessage ?? 'Обновляем статус…',
+        AppRoutes.projectProcessing(projectId),
+      ),
+      GenerationStatus.succeeded => (
+        Icons.check_circle_outline_rounded,
+        'Видео готово',
+        project.resultIsSynthetic
+            ? 'Тестовый результат, не AI'
+            : 'Откройте, чтобы посмотреть',
+        AppRoutes.projectResult(projectId),
+      ),
+      GenerationStatus.failed => (
+        Icons.error_outline_rounded,
+        'Не получилось',
+        project.lastFailureMessage ?? 'Попробуйте ещё раз.',
+        null,
+      ),
+      GenerationStatus.cancelled => (
+        Icons.stop_circle_outlined,
+        'Генерация отменена',
+        'Можно запустить заново.',
+        null,
+      ),
+    };
+    if (title == null) return const SizedBox.shrink();
+
+    final row = GlassRow(
+      leading: Icon(icon),
+      title: title,
+      subtitle: subtitle,
+      trailing: route == null
+          ? null
+          : const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+            ),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: route == null ? null : () => context.push(route),
+        child: GlassSurface(child: row),
+      ),
+    );
+  }
+}
+
+class _PrimaryAction extends ConsumerWidget {
+  const _PrimaryAction({required this.projectId});
+
+  final String projectId;
+
+  Future<void> _start(BuildContext context, WidgetRef ref) async {
+    final failure = await ref
+        .read(jobTrackerProvider(projectId).notifier)
+        .start();
+    if (!context.mounted) return;
+    if (failure != null) {
+      showFailure(context, failure);
+      return;
+    }
+    context.push(AppRoutes.projectProcessing(projectId));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tracker = ref.watch(jobTrackerProvider(projectId));
+    final project = tracker.project;
+    if (tracker.loading || project == null) return const SizedBox.shrink();
+
+    if (project.hasActiveJob) {
+      return GlassButton(
+        label: 'Смотреть прогресс',
+        icon: Icons.hourglass_top_rounded,
+        prominent: true,
+        expand: true,
+        onPressed: () => context.push(AppRoutes.projectProcessing(projectId)),
+      );
+    }
+    if (project.hasResult) {
+      return GlassButton(
+        label: 'Смотреть результат',
+        icon: Icons.play_circle_outline_rounded,
+        prominent: true,
+        expand: true,
+        onPressed: () => context.push(AppRoutes.projectResult(projectId)),
+      );
+    }
+    final failed =
+        tracker.status == GenerationStatus.failed ||
+        tracker.status == GenerationStatus.cancelled;
+    return GlassButton(
+      label: tracker.busy
+          ? 'Запускаем…'
+          : failed
+          ? 'Попробовать снова'
+          : 'Создать видео',
+      icon: failed ? Icons.refresh_rounded : Icons.auto_awesome_rounded,
+      prominent: true,
+      expand: true,
+      onPressed: tracker.busy ? null : () => _start(context, ref),
     );
   }
 }

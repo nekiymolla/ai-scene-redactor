@@ -9,4 +9,6 @@ abstract final class AppRoutes {
   static const createReview = '/create/review';
 
   static String project(String id) => '/projects/$id';
+  static String projectProcessing(String id) => '/projects/$id/processing';
+  static String projectResult(String id) => '/projects/$id/result';
 }

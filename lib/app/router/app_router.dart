@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/generation/presentation/processing_screen.dart';
+import '../../features/generation/presentation/result_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/project_creation/presentation/characters_screen.dart';
 import '../../features/project_creation/presentation/create_project_screen.dart';
@@ -25,6 +27,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'projects/:id',
             builder: (_, state) =>
                 ProjectDetailsScreen(projectId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'processing',
+                builder: (_, state) =>
+                    ProcessingScreen(projectId: state.pathParameters['id']!),
+              ),
+              GoRoute(
+                path: 'result',
+                builder: (_, state) =>
+                    ResultScreen(projectId: state.pathParameters['id']!),
+              ),
+            ],
           ),
           GoRoute(
             path: 'create',

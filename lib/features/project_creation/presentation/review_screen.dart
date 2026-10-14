@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router/app_routes.dart';
 import '../../../app/theme/app_tokens.dart';
+import '../../../core/errors/app_failure.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/glass/glass_back_button.dart';
@@ -12,6 +13,8 @@ import '../../../core/widgets/glass/glass_controls.dart';
 import '../../../core/widgets/glass/glass_scaffold.dart';
 import '../../../core/widgets/glass/glass_surface.dart';
 import '../../../core/widgets/media/media_tiles.dart';
+import '../../generation/application/generation_providers.dart';
+import '../../projects/application/projects_providers.dart';
 import '../application/project_draft_controller.dart';
 
 /// Step 4: summary, project name, rights and consent confirmation.
@@ -40,13 +43,30 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         .read(projectDraftProvider.notifier)
         .save();
     if (!mounted) return;
-    setState(() => _saving = false);
     if (failure != null) {
+      setState(() => _saving = false);
       showFailure(context, failure);
       return;
     }
+    final saved = project!;
+
+    // The project is safe on disk now; a failed start only means the user
+    // retries from the project page.
+    AppFailure? startFailure;
+    try {
+      await ref.read(generationServiceProvider).start(saved);
+    } on AppFailure catch (f) {
+      startFailure = f;
+    }
+    ref.invalidate(recentProjectsProvider);
+    if (!mounted) return;
     // Replaces the whole wizard stack; the draft is disposed afterwards.
-    context.go(AppRoutes.project(project!.id));
+    if (startFailure == null) {
+      context.go(AppRoutes.projectProcessing(saved.id));
+    } else {
+      context.go(AppRoutes.project(saved.id));
+      showFailure(context, startFailure);
+    }
   }
 
   @override
@@ -61,8 +81,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       title: 'Проверка',
       leading: const GlassBackButton(),
       bottomAction: GlassButton(
-        label: _saving ? 'Сохраняем…' : 'Сохранить проект',
-        icon: Icons.check_rounded,
+        label: _saving ? 'Запускаем…' : 'Создать видео',
+        icon: Icons.auto_awesome_rounded,
         prominent: true,
         expand: true,
         onPressed: draft.canSave && !_saving ? _save : null,
@@ -187,8 +207,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     horizontal: AppSpacing.md,
                   ),
                   child: Text(
-                    'Проект сохранится на этом устройстве. Запуск генерации '
-                    'появится в следующем обновлении приложения.',
+                    'Проект сохранится на этом устройстве, и сразу начнётся '
+                    'обработка.',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),

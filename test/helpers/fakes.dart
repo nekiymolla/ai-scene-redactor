@@ -8,6 +8,9 @@ import 'package:ai_scene_changer/core/media/media_importer.dart';
 import 'package:ai_scene_changer/core/media/media_limits.dart';
 import 'package:ai_scene_changer/core/media/media_picker.dart';
 import 'package:ai_scene_changer/core/storage/app_storage.dart';
+import 'package:ai_scene_changer/features/generation/application/generation_providers.dart';
+import 'package:ai_scene_changer/features/generation/data/mock_generation_gateway.dart';
+import 'package:ai_scene_changer/features/generation/domain/generation_gateway.dart';
 import 'package:ai_scene_changer/features/projects/application/projects_providers.dart';
 import 'package:ai_scene_changer/features/projects/data/projects_repository.dart';
 import 'package:flutter/material.dart';
@@ -94,18 +97,56 @@ class TestEnv {
     : storageRoot = Directory.systemTemp.createTempSync('scene_test_'),
       picker = FakeMediaPicker(),
       importer = FakeMediaImporter(),
-      repository = InMemoryProjectsRepository();
+      repository = InMemoryProjectsRepository() {
+    storage = AppStorage(storageRoot);
+    gateway = MockGenerationGateway(
+      storage,
+      () => scenario,
+      timeline: fastTimeline,
+      store: MemoryMockJobStore(),
+    );
+  }
+
+  /// 1 s upload, 1 s queue, 4 s processing.
+  static const fastTimeline = MockTimeline(
+    upload: Duration(seconds: 1),
+    queue: Duration(seconds: 1),
+    processing: Duration(seconds: 4),
+  );
+  static const pollInterval = Duration(milliseconds: 250);
 
   final Directory storageRoot;
+  late final AppStorage storage;
   final FakeMediaPicker picker;
   final FakeMediaImporter importer;
   final ProjectsRepository repository;
+  late final MockGenerationGateway gateway;
+  var scenario = MockScenario.success;
+
+  /// When true the mock reads the scenario from Settings like the real app,
+  /// instead of from [scenario].
+  var useSettingsScenario = false;
+
+  /// Replaces [gateway] entirely, e.g. with a flaky wrapper.
+  GenerationGateway? customGateway;
 
   List<Override> get overrides => [
-    appStorageProvider.overrideWithValue(AppStorage(storageRoot)),
+    appStorageProvider.overrideWithValue(storage),
     mediaPickerProvider.overrideWithValue(picker),
     mediaImporterProvider.overrideWithValue(importer),
     projectsRepositoryProvider.overrideWithValue(repository),
+    if (useSettingsScenario)
+      generationGatewayProvider.overrideWith(
+        (ref) => MockGenerationGateway(
+          storage,
+          () => ref.read(mockScenarioProvider),
+          timeline: fastTimeline,
+          store: MemoryMockJobStore(),
+        ),
+      )
+    else
+      generationGatewayProvider.overrideWithValue(customGateway ?? gateway),
+    pollIntervalProvider.overrideWithValue(pollInterval),
   ];
 
   ProviderContainer container() {
@@ -147,5 +188,14 @@ Future<void> scrollTo(WidgetTester tester, Finder finder) async {
     200,
     scrollable: find.byType(Scrollable).first,
   );
+  await tester.pumpAndSettle();
+}
+
+/// Advances fake time in small steps so timers and frames both run.
+Future<void> advance(WidgetTester tester, Duration total) async {
+  const step = Duration(milliseconds: 250);
+  for (var t = Duration.zero; t < total; t += step) {
+    await tester.pump(step);
+  }
   await tester.pumpAndSettle();
 }
