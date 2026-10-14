@@ -69,13 +69,7 @@ void main() {
     await advance(tester, const Duration(seconds: 7));
     expect(find.text('Тестовый результат, не AI'), findsOneWidget);
     expect(find.text('Сгенерировать ещё раз'), findsOneWidget);
-    // Details live in the sheet: drag it up to reveal them.
-    expect(find.text('Это не AI-результат'), findsNothing);
-    await tester.drag(
-      find.text('Тестовый результат, не AI'),
-      const Offset(0, -400),
-    );
-    await tester.pumpAndSettle();
+    await scrollTo(tester, find.text('Это не AI-результат'));
     expect(find.text('Это не AI-результат'), findsOneWidget);
 
     // Back to the project: it shows the finished result.

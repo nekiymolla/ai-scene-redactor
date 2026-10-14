@@ -74,67 +74,62 @@ class ResultScreen extends ConsumerWidget {
       duration: project.resultIsSynthetic ? project.sourceVideo.duration : null,
     );
 
-    final collapsed = 150 + MediaQuery.paddingOf(context).bottom;
-
     return GlassScaffold(
       title: 'Результат',
       leading: const GlassBackButton(),
-      sheetCollapsedHeight: collapsed,
-      sheet: GlassSheet(
-        collapsedHeight: collapsed,
-        expandedFraction: 0.55,
-        header: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _ResultBadge(synthetic: project.resultIsSynthetic),
-            const SizedBox(height: AppSpacing.md),
-            GlassButton(
-              label: tracker.busy ? 'Запускаем…' : 'Сгенерировать ещё раз',
-              icon: Icons.auto_awesome_rounded,
-              prominent: true,
-              expand: true,
-              onPressed: tracker.busy ? null : () => _regenerate(context, ref),
-            ),
-          ],
-        ),
-        children: [
-          if (project.resultIsSynthetic) ...[
-            GlassSurface(
-              child: const GlassRow(
-                leading: Icon(Icons.info_outline_rounded),
-                title: 'Это не AI-результат',
-                subtitle:
-                    'В демо-режиме вместо сгенерированного ролика '
-                    'показывается ваше исходное видео без изменений.',
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-          ],
-          const SectionCaption('Запрос'),
-          GlassSurface(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Text(
-              project.prompt.isEmpty
-                  ? 'Без текстового описания'
-                  : project.prompt,
-              style: theme.textTheme.bodyLarge,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            'Сохранение в галерею и «Поделиться» появятся в одном из '
-            'следующих обновлений.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
+      bottomAction: GlassButton(
+        label: tracker.busy ? 'Запускаем…' : 'Сгенерировать ещё раз',
+        icon: Icons.auto_awesome_rounded,
+        prominent: true,
+        expand: true,
+        onPressed: tracker.busy ? null : () => _regenerate(context, ref),
       ),
       slivers: [
         SliverPadding(
           padding: AppSpacing.page,
-          sliver: SliverToBoxAdapter(
-            child: VideoPreview(asset: result, maxHeight: 560),
+          sliver: SliverList.list(
+            children: [
+              VideoPreview(asset: result, maxHeight: 560),
+              const SizedBox(height: AppSpacing.md),
+              _ResultBadge(synthetic: project.resultIsSynthetic),
+              const SizedBox(height: AppSpacing.md),
+              if (project.resultIsSynthetic) ...[
+                GlassSurface(
+                  child: const GlassRow(
+                    leading: Icon(Icons.info_outline_rounded),
+                    title: 'Это не AI-результат',
+                    subtitle:
+                        'В демо-режиме вместо сгенерированного ролика '
+                        'показывается ваше исходное видео без изменений.',
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+              ],
+              const SectionCaption('Запрос'),
+              GlassSurface(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    project.prompt.isEmpty
+                        ? 'Без текстового описания'
+                        : project.prompt,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: Text(
+                  'Сохранение в галерею и «Поделиться» появятся в одном из '
+                  'следующих обновлений.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
